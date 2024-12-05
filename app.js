@@ -7,7 +7,12 @@ const routes = require("./routes"); //index.js 자동 탐색
 const { PORT } = require("./config/env");
 
 const app = express();
+
+//JSON 요청을 자동으로 파싱해주는 미들웨어
 app.use(express.json());
+
+//모든 라우트 연결
+app.use(routes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
