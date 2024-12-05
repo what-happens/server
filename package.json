@@ -4,7 +4,7 @@
   "description": "backend for the Whathappen project",
   "main": "app.js",
   "scripts": {
-    "start" : "node app.js",
+    "start": "node app.js",
     "dev": "nodemon app.js"
   },
   "keywords": [],
@@ -14,6 +14,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.1",
+    "firebase-admin": "^13.0.1",
     "morgan": "^1.10.0"
   },
   "devDependencies": {
