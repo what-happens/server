@@ -1,6 +1,7 @@
 const { validationResult } = require("express-validator");
 const admin = require("firebase-admin");
 const { getIdCookieOptions } = require("../config/cookie");
+const UserModel = require("../models/user");
 
 const createUser = async (req, res) => {
   const errors = validationResult(req);
@@ -10,7 +11,7 @@ const createUser = async (req, res) => {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { email, password, name } = req.body;
+  const { email, password, name } = req.body; //유저의 입력 정보
 
   try {
     const userRecord = await admin.auth().createUser({
@@ -18,7 +19,20 @@ const createUser = async (req, res) => {
       password,
       displayName: name,
     });
-    res.status(201).json({ message: "User created", user: userRecord });
+
+    const uid = userRecord.uid;
+
+    const createdAt = admin.firestore.Timestamp.now();
+    //firestore에 저장이 안되면 admin.auth의 작업이 취소되어야 함
+    const user = new UserModel(uid, email, name, createdAt);
+
+    await user.createUser();
+
+    res.status(201).json({
+      message: "User created",
+      userRecord: userRecord,
+      fireStore: user,
+    });
   } catch (error) {
     res
       .status(500)
