@@ -15,37 +15,56 @@ class Bookmark {
       throw new Error("북마크 데이터를 가지고 오지 못했습니다.");
     }
   };
-  static postBookmark = async (uid, qid) => {
+
+  static postBookmark = async (uid, bookmark) => {
     try {
       const bookmarkRef = db.collection("bookmark").doc(uid);
-      const bookmarkDoc = await bookmarkRef.get();
+      const result = [];
 
-      if (bookmarkDoc.exists) {
+      await db.runTransaction(async (transaction) => {
+        //덮어쓰는 로직이므로 불러오느데 에러가 생기면 원본데이터 손실 => 트랙잭션으로 불러올 때 실패하면 원본데이터 손실 안 가게 하기
+        const bookmarkDoc = await bookmarkRef.get(bookmarkRef);
         const bookmarks = bookmarkDoc.data().bookmark || [];
-        const isAlreadyBookmarked = bookmarks.some(
-          (bookmark) => bookmark.qid === parseInt(qid)
+
+        const deletebookmarkSet = new Set(
+          bookmark.map((item) => {
+            if (item.action === "delete") {
+              return item.qid;
+            }
+          })
         );
 
-        if (isAlreadyBookmarked) {
-          //이미 존재하는 qid라면
-          await bookmarkRef.update({
-            bookmark: FieldValue.arrayRemove(
-              bookmarks.find((bookmark) => bookmark.qid === parseInt(qid))
-            ),
+        const filteredBookmarks = bookmarks.filter(
+          (item) => !deletebookmarkSet.has(item.qid)
+        );
+
+        const newBookmarks = bookmark
+          .filter((item) => item.action === "add")
+          .map((item) => {
+            return { qid: item.qid, updateAt: Timestamp.now() };
           });
-        } else {
-          //북마크가 없는 상태라면
-          await bookmarkRef.set(
-            {
-              bookmark: FieldValue.arrayUnion({
-                qid: parseInt(qid),
-                updateAt: Timestamp.now(),
-              }),
-            },
-            { merge: true }
-          );
-        }
-      }
+
+        const mergedBookmark = [
+          ...new Map(
+            [...filteredBookmarks, ...newBookmarks].map((item) => [
+              item.qid,
+              { qid: item.qid, updateAt: item.updateAt },
+            ])
+          ).values(),
+        ];
+
+        console.log("merge", mergedBookmark);
+        result.push(...mergedBookmark);
+
+        await transaction.set(
+          bookmarkRef,
+          {
+            bookmark: mergedBookmark,
+          },
+          { merge: true }
+        );
+      });
+      return result;
     } catch (error) {
       throw new Error(`북마크 업데이트 에러 ${error}`);
     }
