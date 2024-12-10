@@ -1,13 +1,7 @@
-const { param } = require("express-validator");
+const { body } = require("express-validator");
 
 const bookmarkValidator = [
-  param("qid")
-    .trim()
-    .exists()
-    .withMessage("qid를 포함해주세요")
-    .bail()
-    .isNumeric()
-    .bail("qid의 타입은 Number입니다."),
+  body("bookmark").isArray().withMessage("review는 배열 형태이어야 합니다"),
 ];
 
 module.exports = { bookmarkValidator };
