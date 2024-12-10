@@ -18,12 +18,14 @@ const postBookmark = async (req, res) => {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { qid } = req.params;
+  const { bookmark } = req.body;
   const { uid } = req.user;
 
   try {
-    await Bookmark.postBookmark(uid, qid);
-    res.status(200).json({ message: "북마크 업데이트 성공" });
+    const storedBookmark = await Bookmark.postBookmark(uid, bookmark);
+    res
+      .status(200)
+      .json({ message: "북마크 업데이트 성공", bookmark: storedBookmark });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
