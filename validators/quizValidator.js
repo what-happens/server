@@ -1,4 +1,4 @@
-const { query } = require("express-validator");
+const { query, param } = require("express-validator");
 
 // 회원가입 시 검증할 내용
 const quizQueryValidator = [
@@ -18,4 +18,14 @@ const quizQueryValidator = [
     .withMessage("limit의 데이터 타입은 Number 타입이어야 합니다."),
 ];
 
-module.exports = { quizQueryValidator };
+const quizParamValidator = [
+  param("qid")
+    .trim()
+    .exists()
+    .withMessage("qid를 포함해주세요")
+    .bail()
+    .isNumeric()
+    .bail("qid의 타입은 Number입니다."),
+];
+
+module.exports = { quizQueryValidator, quizParamValidator };
