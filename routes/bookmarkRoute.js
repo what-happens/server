@@ -8,5 +8,6 @@ const { bookmarkValidator } = require("../validators/bookmarkValidator");
 const router = express.Router();
 
 router.get("/", authenticate, getBookmark);
+router.post("/:qid", authenticate, bookmarkValidator, postBookmark);
 
 module.exports = router;
