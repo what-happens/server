@@ -1,28 +1,39 @@
 const { getFirestoreInstance } = require("../config/firebase");
 const { selectArrayElement } = require("../utils/selectArrayElement");
+const { Bookmark } = require("./bookmark");
 const db = getFirestoreInstance();
 
 class QuizModal {
-  static async getRandomQuiz(category, limit) {
+  static async getRandomQuiz(category, limit, uid) {
     try {
       const categoryQuery = db.collection("category").doc(category);
       const categorySnapshot = await categoryQuery.get(); //category 컬렉션에서 category 변수의 값과 일치하는 doc를 불러온다.
+      const bookmark = await Bookmark.getBookmarks(uid);
+      const bookmarkSet = new Set(...[bookmark.map((item) => item.qid)]);
       const qIds = categorySnapshot.data().qid;
       const selectedQids = selectArrayElement(qIds, limit);
-      let quizQuery = db
-        .collection("quiz")
-        .where("category", "==", category)
-        .where("id", "in", selectedQids); //in은 한번에 10개의 처리가 가능 배치처리로 바꿔줘야한다.
-      const quizSnapshot = await quizQuery.get();
-      if (quizSnapshot.empty) {
-        return [];
+      const CHUNK_SIZE = 10;
+      const quizzes = [];
+      for (let i = 0; i < selectedQids.length; i += CHUNK_SIZE) {
+        const chunk = selectedQids.slice(i, i + CHUNK_SIZE);
+
+        // Firestore 쿼리에서 'in' 연산자 사용
+        const querySnapshot = await db
+          .collection("quiz")
+          .where("category", "==", category)
+          .where("id", "in", chunk)
+          .get();
+
+        querySnapshot.forEach((doc) => {
+          quizzes.push(doc.data());
+        });
       }
-      const quizzes = quizSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      return quizzes;
-      //스냅샷 데이터를 배열로 변환
+      return quizzes.map((item) => {
+        if (bookmarkSet.has(item.id)) {
+          return { ...item, ...{ isBookmark: true } };
+        }
+        return { ...item, ...{ isBookmark: false } };
+      });
     } catch (error) {
       throw new Error(`퀴즈를 가져오지 못했습니다: ${error.message}`);
     }
