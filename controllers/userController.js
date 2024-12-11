@@ -1,7 +1,7 @@
 const { validationResult } = require("express-validator");
 const admin = require("firebase-admin");
 const { getIdCookieOptions } = require("../config/cookie");
-const UserModel = require("../models/user");
+const { UserModel } = require("../models/user");
 
 const createUser = async (req, res) => {
   const errors = validationResult(req);
