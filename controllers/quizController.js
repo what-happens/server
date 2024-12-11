@@ -1,5 +1,8 @@
 const { validationResult } = require("express-validator");
 const QuizModal = require("../models/quiz");
+const { Bookmark } = require("../models/bookmark");
+const { Review } = require("../models/review");
+const { UserModel } = require("../models/user");
 const getQuizzes = async (req, res) => {
   const errors = validationResult(req);
 
@@ -9,9 +12,10 @@ const getQuizzes = async (req, res) => {
   }
 
   const { category, limit } = req.query;
-
+  const { uid } = req.user;
   try {
-    const randomQuiz = await QuizModal.getRandomQuiz(category, limit);
+    const randomQuiz = await QuizModal.getRandomQuiz(category, limit, uid);
+
     res.status(200).json({ quiz: randomQuiz });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -35,4 +39,17 @@ const getQuiz = async (req, res) => {
   }
 };
 
-module.exports = { getQuizzes, getQuiz };
+const storeQuizResult = async (req, res) => {
+  const { uid } = req.user;
+  const { bookmark, review } = req.body;
+  const resultBookmark = await Bookmark.postBookmark(uid, bookmark);
+  const resultReview = await Review.postReview(uid, review);
+  const quizTime = await UserModel.updateQuizTimes(uid);
+  res.status(200).json({
+    message: "퀴즈 결과를 성공적으로 저장했습니다.",
+    bookmark: resultBookmark,
+    review: resultReview,
+    quizTime: quizTime,
+  });
+};
+module.exports = { getQuizzes, getQuiz, storeQuizResult };
