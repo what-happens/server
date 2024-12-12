@@ -5,6 +5,8 @@ const {
   getRefreshTokenCookieOptions,
 } = require("../config/cookie");
 const { UserModel } = require("../models/user");
+const { Bookmark } = require("../models/bookmark");
+const { Review } = require("../models/review");
 
 const createUser = async (req, res) => {
   const errors = validationResult(req);
@@ -127,4 +129,21 @@ const logoutUser = async (req, res) => {
     });
   }
 };
-module.exports = { createUser, loginUser, logoutUser };
+
+const deleteUser = async (req, res) => {
+  const { uid } = req.user;
+
+  try {
+    await UserModel.deleteUser(uid);
+    await Bookmark.deleteBookmarksByUserId(uid);
+    await Review.deleteReviewNotesByUserId(uid);
+    await admin.auth().deleteUser(uid);
+
+    res.status(200).json({ message: "회원 탈퇴에 성공했습니다." });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "회원 탈퇴에 실패했습니다." });
+  }
+};
+
+module.exports = { createUser, loginUser, logoutUser, deleteUser };
