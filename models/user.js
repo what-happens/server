@@ -64,6 +64,11 @@ class UserModel {
       throw new Error("유저 정보를 업데이트 하지 못했습니다.");
     }
   }
+
+  static async deleteUser(uid) {
+    const userRef = db.collection("users").doc(uid);
+    await userRef.delete();
+  }
 }
 
 module.exports = { UserModel };
