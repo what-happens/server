@@ -59,7 +59,7 @@ const deleteReview = async (req, res) => {
   try {
     const existingReview = await Review.getReview(uid);
 
-    const deleteReviewSet = new Set(...review.map((item) => item.qid));
+    const deleteReviewSet = new Set(review.map((item) => item.qid));
 
     const remainReview = existingReview.filter(
       (review) => !deleteReviewSet.has(review.qid)
@@ -69,7 +69,7 @@ const deleteReview = async (req, res) => {
 
     res
       .status(200)
-      .json({ message: "성공적으로 저장했습니다", review: mergedReview });
+      .json({ message: "성공적으로 저장했습니다", review: remainReview });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
