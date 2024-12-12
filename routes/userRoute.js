@@ -13,7 +13,7 @@ const authenticate = require("../middleware/authMiddleware");
 const router = express.Router();
 
 router.post("/login", validateLogin, loginUser);
-router.post("/signin", validateCreateUser, createUser);
+router.post("/signup", validateCreateUser, createUser);
 router.post("/logout", authenticate, logoutUser);
 
 module.exports = router;
