@@ -44,4 +44,15 @@ const updateClearStage = async (req, res) => {
   }
 };
 
-module.exports = { updateClearStage };
+const getClearStage = async (req, res) => {
+  const { uid } = req.user;
+  try {
+    const clearStageInfo = await Stage.getUserStageProgress(uid);
+    return res.status(200).json({
+      clearStage: clearStageInfo,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+module.exports = { updateClearStage, getClearStage };
