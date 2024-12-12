@@ -77,6 +77,11 @@ class Bookmark {
       throw new Error(`북마크 업데이트 에러 ${error}`);
     }
   };
+
+  static deleteBookmarksByUserId = async (uid) => {
+    const bookmarkRef = db.collection("bookmark").doc(uid);
+    await bookmarkRef.delete();
+  };
 }
 
 module.exports = { Bookmark };
