@@ -1,6 +1,5 @@
 const { Timestamp } = require("firebase-admin/firestore");
 const { getFirestoreInstance } = require("../config/firebase");
-const { compareTime } = require("../utils/comparisons");
 const db = getFirestoreInstance();
 
 class Review {
