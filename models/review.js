@@ -69,7 +69,7 @@ class Review {
     }
   };
 
-  static async getProcessedData({ bookmarks, reviews }) {
+  static getProcessedData = async ({ bookmarks, reviews }) => {
     const processedData = [];
     const reviewQidSet = new Set(reviews.map((review) => review.qid));
     // 북마크와 리뷰를 비교하여 가공
@@ -105,7 +105,12 @@ class Review {
     });
 
     return processedData;
-  }
+  };
+
+  static deleteReviewNotesByUserId = async (uid) => {
+    const reviewDoc = await db.collection("reviewNote").doc(uid);
+    return reviewDoc.delete();
+  };
 }
 
 module.exports = { Review };
