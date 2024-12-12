@@ -102,7 +102,7 @@ const loginUser = async (req, res) => {
 };
 
 const logoutUser = async (req, res) => {
-  const { idToken } = req.cookie.accessToken;
+  const { idToken } = req.cookies.accessToken;
   try {
     await fetch(
       `https://identitytoolkit.googleapis.com/v1/accounts:delete?key=${process.env.FIREBASE_WEB_API_KEY}`,
