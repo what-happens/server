@@ -30,7 +30,6 @@ class Review {
 
   static postReview = async (uid, review) => {
     try {
-      console.log(review, uid);
       await db.collection("reviewNote").doc(uid).set({
         review: review,
       });
