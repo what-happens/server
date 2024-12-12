@@ -1,7 +1,11 @@
 const { validationResult } = require("express-validator");
 const admin = require("firebase-admin");
-const { getIdCookieOptions } = require("../config/cookie");
+const {
+  getIdCookieOptions,
+  getRefreshTokenCookieOptions,
+} = require("../config/cookie");
 const { UserModel } = require("../models/user");
+const { redirect } = require("react-router-dom");
 
 const createUser = async (req, res) => {
   const errors = validationResult(req);
@@ -68,7 +72,6 @@ const loginUser = async (req, res) => {
     );
 
     const data = await result.json(); // 응답 데이터 파싱
-
     // 에러 응답 처리
     if (!result.ok) {
       throw {
@@ -77,8 +80,9 @@ const loginUser = async (req, res) => {
       };
     }
     // 응답 처리 수정
-    console.log(result.ok);
+    res.cookie("refreshToken", data.refreshToken, getRefreshTokenCookieOptions);
     res.cookie("accessToken", data.idToken, getIdCookieOptions);
+
     res.status(200).send({
       message: "Success Login",
     });
@@ -97,4 +101,32 @@ const loginUser = async (req, res) => {
   }
 };
 
-module.exports = { createUser, loginUser };
+const logoutUser = async (req, res) => {
+  const { idToken } = req.cookie.accessToken;
+  try {
+    await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:delete?key=${process.env.FIREBASE_WEB_API_KEY}`,
+      {
+        method: "post",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: { idToken },
+      }
+    );
+
+    res.clearCookie("accessToken", { path: "/" });
+    res.clearCookie("refreshToken", { path: "/" });
+    return res.status(200).json({
+      status: "success",
+      message: "로그아웃에 성공했습니다.",
+      redirectUrl: "/",
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: "로그아웃에 실패했습니다.",
+    });
+  }
+};
+module.exports = { createUser, loginUser, logoutUser };
