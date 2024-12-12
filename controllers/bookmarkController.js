@@ -1,6 +1,7 @@
 const { validationResult } = require("express-validator");
 const { Bookmark } = require("../models/bookmark");
 const { Timestamp } = require("firebase-admin/firestore");
+const { updateBookmark } = require("../services/bookmarkService");
 
 const getBookmark = async (req, res) => {
   const { uid } = req.user;
@@ -23,41 +24,10 @@ const postBookmark = async (req, res) => {
   const { uid } = req.user;
 
   try {
-    const exisingBookmark = await Bookmark.getBookmarks(uid);
-    const deleteBookmarkSet = new Set(
-      bookmark
-        .filter((item) => item.action === "delete")
-        .map((item) => item.qid)
-    );
-
-    const filteredBookmarks = exisingBookmark.filter(
-      (bookmark) => !deleteBookmarkSet.has(bookmark.qid)
-    );
-
-    const newBookmarks = bookmark
-      .filter((item) => item.action === "add")
-      .map((item) => {
-        return {
-          qid: item.qid,
-          category: item.category,
-          updateAt: Timestamp.now(),
-        };
-      });
-
-    const storedBookmark = [
-      ...new Map(
-        [...filteredBookmarks, ...newBookmarks].map((item) => [
-          item.qid,
-          { qid: item.qid, category: item.category, updateAt: item.updateAt },
-        ])
-      ).values(),
-    ];
-
-    console.log(storedBookmark);
-    await Bookmark.postBookmark(uid, storedBookmark);
+    const updatedBookmarks = await updateBookmark(uid, bookmark);
     return res
       .status(200)
-      .json({ message: "북마크 업데이트 성공", bookmark: storedBookmark });
+      .json({ message: "북마크 업데이트 성공", bookmark: updatedBookmarks });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
