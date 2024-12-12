@@ -5,7 +5,6 @@ const {
   getRefreshTokenCookieOptions,
 } = require("../config/cookie");
 const { UserModel } = require("../models/user");
-const { redirect } = require("react-router-dom");
 
 const createUser = async (req, res) => {
   const errors = validationResult(req);
