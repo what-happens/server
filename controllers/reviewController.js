@@ -1,3 +1,4 @@
+const { Timestamp } = require("firebase-admin/firestore");
 const { Bookmark } = require("../models/bookmark");
 const { Review } = require("../models/review");
 const { compareTime } = require("../utils/comparisons");
@@ -25,10 +26,27 @@ const postReview = async (req, res) => {
   const { review } = req.body;
 
   try {
-    const storedReview = await Review.postReview(uid, review);
+    const existingReview = await Review.getReview(uid);
+
+    const newReviews = review.map((item) => {
+      return {
+        qid: item.qid,
+        category: item.category,
+        updateAt: Timestamp.now(),
+      };
+    });
+
+    const mergedReview = [
+      ...new Map(
+        [...existingReview, ...newReviews].map((item) => [item.qid, item])
+      ).values(),
+    ];
+
+    await Review.postReview(uid, mergedReview);
+
     res
       .status(200)
-      .json({ message: "성공적으로 저장했습니다", review: storedReview });
+      .json({ message: "성공적으로 저장했습니다", review: mergedReview });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
