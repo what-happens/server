@@ -46,7 +46,6 @@ const createUser = async (req, res) => {
 const loginUser = async (req, res) => {
   const errors = validationResult(req);
 
-  console.log("errors", errors);
   if (!errors.isEmpty()) {
     //req에서 에러가 있을 경우
     return res.status(400).json({ errors: errors.array() });
