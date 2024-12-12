@@ -1,7 +1,12 @@
 const { validationResult } = require("express-validator");
 const admin = require("firebase-admin");
-const { getIdCookieOptions } = require("../config/cookie");
-const UserModel = require("../models/user");
+const {
+  getIdCookieOptions,
+  getRefreshTokenCookieOptions,
+} = require("../config/cookie");
+const { UserModel } = require("../models/user");
+const { Bookmark } = require("../models/bookmark");
+const { Review } = require("../models/review");
 
 const createUser = async (req, res) => {
   const errors = validationResult(req);
@@ -43,7 +48,6 @@ const createUser = async (req, res) => {
 const loginUser = async (req, res) => {
   const errors = validationResult(req);
 
-  console.log("errors", errors);
   if (!errors.isEmpty()) {
     //req에서 에러가 있을 경우
     return res.status(400).json({ errors: errors.array() });
@@ -68,7 +72,6 @@ const loginUser = async (req, res) => {
     );
 
     const data = await result.json(); // 응답 데이터 파싱
-
     // 에러 응답 처리
     if (!result.ok) {
       throw {
@@ -77,8 +80,9 @@ const loginUser = async (req, res) => {
       };
     }
     // 응답 처리 수정
-    console.log(result.ok);
+    res.cookie("refreshToken", data.refreshToken, getRefreshTokenCookieOptions);
     res.cookie("accessToken", data.idToken, getIdCookieOptions);
+
     res.status(200).send({
       message: "Success Login",
     });
@@ -97,4 +101,49 @@ const loginUser = async (req, res) => {
   }
 };
 
-module.exports = { createUser, loginUser };
+const logoutUser = async (req, res) => {
+  const { idToken } = req.cookies.accessToken;
+  try {
+    await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:delete?key=${process.env.FIREBASE_WEB_API_KEY}`,
+      {
+        method: "post",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: { idToken },
+      }
+    );
+
+    res.clearCookie("accessToken", { path: "/" });
+    res.clearCookie("refreshToken", { path: "/" });
+    return res.status(200).json({
+      status: "success",
+      message: "로그아웃에 성공했습니다.",
+      redirectUrl: "/",
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: "로그아웃에 실패했습니다.",
+    });
+  }
+};
+
+const deleteUser = async (req, res) => {
+  const { uid } = req.user;
+
+  try {
+    await UserModel.deleteUser(uid);
+    await Bookmark.deleteBookmarksByUserId(uid);
+    await Review.deleteReviewNotesByUserId(uid);
+    await admin.auth().deleteUser(uid);
+
+    res.status(200).json({ message: "회원 탈퇴에 성공했습니다." });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "회원 탈퇴에 실패했습니다." });
+  }
+};
+
+module.exports = { createUser, loginUser, logoutUser, deleteUser };

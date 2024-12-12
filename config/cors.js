@@ -13,6 +13,8 @@ module.exports = {
     "Sec-CH-UA-Mobile",
     "Sec-CH-UA-Full-Version-List",
     "Sec-CH-UA-Platform",
+    "Credentials",
+    "user-agent",
   ],
   credentials: true,
 };

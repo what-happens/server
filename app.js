@@ -18,6 +18,6 @@ app.use(express.json());
 //모든 라우트 연결
 app.use(routes);
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
