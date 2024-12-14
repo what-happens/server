@@ -5,11 +5,15 @@ const corsConfig = require("./config/cors");
 const { initializeFirebaseApp } = require("./config/firebase");
 const { PORT } = require("./config/env");
 const cookieParser = require("cookie-parser");
+const swaggerJsdoc = require("swagger-jsdoc");
+const swaggerUi = require("swagger-ui-express");
+const { swaggerOptions } = require("./config/swagger");
 
 const app = express();
 initializeFirebaseApp();
 
 const routes = require("./routes"); //index.js 자동 탐색
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
 app.use(cookieParser());
 app.use(cors(corsConfig));
@@ -18,6 +22,7 @@ app.use(express.json());
 //모든 라우트 연결
 app.use(routes);
 
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
