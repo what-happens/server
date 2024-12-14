@@ -15,6 +15,12 @@ module.exports = {
     "Sec-CH-UA-Platform",
     "Credentials",
     "user-agent",
+    "Accept",
+    "Accept-Encoding",
+    "Accept-Language",
+    "Access-Control-Request-Headers",
+    "Access-Control-Request-Method",
+    "Sec-Fetch-Mode",
   ],
   credentials: true,
 };
