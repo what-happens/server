@@ -8,15 +8,16 @@ const { UserModel } = require("../models/user");
 const { Bookmark } = require("../models/bookmark");
 const { Review } = require("../models/review");
 
+// 유저 생성 컨트롤러
 const createUser = async (req, res) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
-    //req에서 에러가 있을 경우
+    // 요청에서 검증 오류가 발생한 경우
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { email, password, name } = req.body; //유저의 입력 정보
+  const { email, password, name } = req.body; // 클라이언트에서 입력한 유저 정보
 
   try {
     const userRecord = await admin.auth().createUser({
@@ -26,30 +27,25 @@ const createUser = async (req, res) => {
     });
 
     const uid = userRecord.uid;
-
     const createdAt = admin.firestore.Timestamp.now();
-    //firestore에 저장이 안되면 admin.auth의 작업이 취소되어야 함
-    const user = new UserModel(uid, email, name, createdAt);
 
+    const user = new UserModel(uid, email, name, createdAt);
     await user.createUser();
 
     res.status(201).json({
-      message: "User created",
-      userRecord: userRecord,
-      fireStore: user,
+      message: "유저 생성 성공",
+      user: user,
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error create user", error: error.message });
+    res.status(500).json({ message: "유저 생성 실패", error: error.message });
   }
 };
 
+// 유저 로그인 컨트롤러
 const loginUser = async (req, res) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
-    //req에서 에러가 있을 경우
     return res.status(400).json({ errors: errors.array() });
   }
 
@@ -64,27 +60,27 @@ const loginUser = async (req, res) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: email,
-          password: password,
+          email,
+          password,
           returnSecureToken: true,
         }),
       }
     );
 
-    const data = await result.json(); // 응답 데이터 파싱
-    // 에러 응답 처리
+    const data = await result.json();
+
     if (!result.ok) {
       throw {
         status: 400,
-        message: "Login Failed check Email or Password",
+        message: "로그인 실패. 이메일 또는 비밀번호를 확인하세요.",
       };
     }
-    // 응답 처리 수정
+
     res.cookie("refreshToken", data.refreshToken, getRefreshTokenCookieOptions);
     res.cookie("accessToken", data.idToken, getIdCookieOptions);
 
     res.status(200).send({
-      message: "Success Login",
+      message: "로그인 성공",
     });
   } catch (error) {
     if (error.status && error.message) {
@@ -93,43 +89,28 @@ const loginUser = async (req, res) => {
         error: error.error,
       });
     }
-    // 일반 서버 에러 처리
     res.status(500).send({
-      message: "Server Error",
+      message: "서버 에러",
       error: error.message,
     });
   }
 };
 
+// 로그아웃 컨트롤러
 const logoutUser = async (req, res) => {
-  const { idToken } = req.cookies.accessToken;
   try {
-    await fetch(
-      `https://identitytoolkit.googleapis.com/v1/accounts:delete?key=${process.env.FIREBASE_WEB_API_KEY}`,
-      {
-        method: "post",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: { idToken },
-      }
-    );
-
     res.clearCookie("accessToken", { path: "/" });
     res.clearCookie("refreshToken", { path: "/" });
-    return res.status(200).json({
-      status: "success",
-      message: "로그아웃에 성공했습니다.",
+    res.status(200).json({
+      message: "로그아웃 성공",
       redirectUrl: "/",
     });
   } catch (error) {
-    res.status(500).json({
-      status: "failed",
-      message: "로그아웃에 실패했습니다.",
-    });
+    res.status(500).json({ message: "로그아웃 실패" });
   }
 };
 
+// 유저 삭제 컨트롤러
 const deleteUser = async (req, res) => {
   const { uid } = req.user;
 
@@ -139,10 +120,9 @@ const deleteUser = async (req, res) => {
     await Review.deleteReviewNotesByUserId(uid);
     await admin.auth().deleteUser(uid);
 
-    res.status(200).json({ message: "회원 탈퇴에 성공했습니다." });
+    res.status(200).json({ message: "회원 탈퇴 성공" });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "회원 탈퇴에 실패했습니다." });
+    res.status(500).json({ message: "회원 탈퇴 실패" });
   }
 };
 

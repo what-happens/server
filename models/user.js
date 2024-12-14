@@ -12,6 +12,7 @@ class UserModel {
     this.createdAt = createdAt;
   }
 
+  // 유저 생성 메서드
   async createUser() {
     try {
       const userDoc = await this.userRef.get();
@@ -29,22 +30,24 @@ class UserModel {
         clearStages: this.clearStages,
       });
 
-      console.log(`사용자 정보가 firestore에 저장 : ${this.uid}`);
+      console.log(`사용자 정보가 Firestore에 저장됨: ${this.uid}`);
     } catch (error) {
-      throw new Error(`Firestore 저장 중 오류가 발생했습니다.`);
+      throw new Error(`Firestore 저장 중 오류 발생: ${error.message}`);
     }
   }
 
+  // 특정 유저 데이터를 가져오는 정적 메서드
   static async getUserData(uid) {
     try {
       const userDoc = await db.collection("users").doc(uid).get();
       const userData = userDoc.data();
       return userData;
     } catch (error) {
-      throw new Error("유저 정보를 가져오지 못했습니다.");
+      throw new Error("유저 정보를 가져오는 데 실패했습니다.");
     }
   }
 
+  // 퀴즈 시간 업데이트 메서드
   static async updateQuizTimes(uid) {
     try {
       const userData = await this.getUserData(uid);
@@ -52,7 +55,7 @@ class UserModel {
 
       const userRef = db.collection("users").doc(uid);
 
-      userRef.set(
+      await userRef.set(
         {
           quizTime: quizTime + 1,
         },
@@ -61,10 +64,11 @@ class UserModel {
 
       return quizTime + 1;
     } catch (error) {
-      throw new Error("유저 정보를 업데이트 하지 못했습니다.");
+      throw new Error("유저 정보를 업데이트하는 데 실패했습니다.");
     }
   }
 
+  // 유저 삭제 메서드
   static async deleteUser(uid) {
     const userRef = db.collection("users").doc(uid);
     await userRef.delete();

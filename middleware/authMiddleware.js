@@ -1,6 +1,23 @@
 const admin = require("firebase-admin");
 const { getIdCookieOptions } = require("../config/cookie");
 
+/**
+ * 사용자를 인증하는 미들웨어.
+ * 1. Firebase Admin SDK를 사용하여 accessToken을 검증합니다.
+ * 2. accessToken이 만료된 경우, refreshToken을 사용해 새로운 accessToken을 가져옵니다.
+ * 3. 새로운 accessToken을 쿠키에 저장하고, 사용자 ID를 `req.user` 객체에 추가합니다.
+ *
+ * 요구되는 쿠키:
+ * - accessToken: 현재의 액세스 토큰 (만료되었을 수 있음).
+ * - refreshToken: 새로운 액세스 토큰을 얻기 위한 리프레시 토큰.
+ *
+ * 성공 시:
+ * - `req.user`에 사용자 ID가 포함된 상태로 `next()` 호출.
+ *
+ * 실패 시:
+ * - 적절한 에러 메시지와 함께 401 상태를 반환합니다.
+ */
+
 const authenticate = async (req, res, next) => {
   const idToken = req.cookies.accessToken;
   const refreshToken = req.cookies.refreshToken;

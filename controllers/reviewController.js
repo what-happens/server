@@ -53,7 +53,7 @@ const deleteReview = async (req, res) => {
 
     res
       .status(200)
-      .json({ message: "성공적으로 저장했습니다", review: remainReview });
+      .json({ message: "성공적으로 삭제했습니다", review: remainReview });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
